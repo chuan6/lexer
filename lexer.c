@@ -3,14 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "compiler.h"
 
-int	fd_src = 0;		// default to stdin
+int	fd = 0;
 int	is_string = 0;
 int	n_read;
 char	curr;			// current character
 
 void read_id() {
-	while ((n_read=read(fd_src, &curr, 1)) == 1) {
+	while ((n_read=read(fd, &curr, 1)) == 1) {
 		if (!isalnum(curr) && curr!='_')
 			break;
 		printf("%c", curr);
@@ -19,7 +20,7 @@ void read_id() {
 }
 
 void read_num() {
-	while ((n_read=read(fd_src, &curr, 1)) == 1) {
+	while ((n_read=read(fd, &curr, 1)) == 1) {
 		if (!isdigit(curr))
 			break;
 		printf("%c", curr);
@@ -28,7 +29,7 @@ void read_num() {
 }
 
 void read_sym() {
-	while ((n_read=read(fd_src, &curr, 1)) == 1) {
+	while ((n_read=read(fd, &curr, 1)) == 1) {
 		if (isspace(curr) || isalnum(curr) || curr=='_' || curr=='"')
 			break;
 		printf("%c", curr);
@@ -36,21 +37,13 @@ void read_sym() {
 	printf("\n");
 }
 
-int main(int argc, char* argv[])
-{
-	if (argc > 2) {
-		fprintf(stderr, "Use \"prog [input file]\"\n");
-		exit(1);
-	}
-	if (argc == 2) {
-		fd_src = open(argv[1], O_RDONLY, 0);
-		if (fd_src == -1) {
-			fprintf(stderr, "Cannot open file \"%s\"\n", argv[1]);
-			exit(1);
-		}
-	}
+void LexAnalyze(int fd_src) {
+	fd = fd_src;
 
-	while ((n_read=read(fd_src, &curr, 1)) == 1) {
+	if (fd < 0)
+		return;
+
+	while ((n_read=read(fd, &curr, 1)) == 1) {
 		if (is_string) {
 			if (curr == '"') {
 				printf("\n");
@@ -86,6 +79,6 @@ int main(int argc, char* argv[])
 		printf("\n: EOF\n");
 	else
 		fprintf(stderr, "read file failure\n");
-
-	return 0;
 }
+
+
