@@ -6,8 +6,8 @@
 #include "compiler.h"
 
 int	fd = 0;
-int	is_string = 0;
-int	n_read;
+int	is_within_str = 0;
+int	n_read;			// expecting to be 0, or 1
 char	curr;			// current character
 
 void read_id() {
@@ -44,11 +44,10 @@ void LexAnalyze(int fd_src) {
 		return;
 
 	while ((n_read=read(fd, &curr, 1)) == 1) {
-		if (is_string) {
+		if (is_within_str) {
 			if (curr == '"') {
-				printf("\n");
-				is_string = 0;
-				printf("SYMBOL: %c\n", curr);
+				is_within_str = 0;
+				printf("\nSYMBOL: %c\n", curr);
 			} else {
 				printf("%c", curr);
 			}
@@ -61,10 +60,8 @@ void LexAnalyze(int fd_src) {
 					printf("NUMBER: %c", curr);
 					read_num();
 				} else if (curr == '"') {
-					printf("SYMBOL: %c\n", curr);
-					
-					is_string = 1;
-					printf("STRING: ");
+					is_within_str = 1;
+					printf("SYMBOL: %c\nSTRING: ", curr);
 					break;
 				} else if (!isspace(curr)) {
 					printf("SYMBOL: %c", curr);
