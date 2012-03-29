@@ -15,11 +15,9 @@ int main(int argc, char* argv[])
 			fd_src = open(argv[i], O_RDONLY, 0);
 			if (fd_src == -1) {
 				fprintf(stderr, "Cannot open file \"%s\"\n", argv[i]);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
-		
 			LexAnalyze(fd_src);
-
 			close(fd_src);
 		}
 	} else {

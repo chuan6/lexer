@@ -5,13 +5,38 @@
 #include <unistd.h>
 #include "compiler.h"
 
-int	fd = 0;
-int	is_within_str = 0;
-int	n_read;			// expecting to be 0, or 1
-char	curr;			// current character
+static	int	fd = 0;
+static	int	is_within_str = 0;
+static	char	curr;			// current character
 
-void read_id() {
-	while ((n_read=read(fd, &curr, 1)) == 1) {
+// read 1 byte from buffer
+static int readchar(char* c) {
+	static int n;
+	static char buf[BUFSIZ];
+	static int i = 0;
+
+	for (;;) {
+		if (i == 0) {
+			if ((n=read(fd, buf, BUFSIZ)) < 0) {
+				fprintf(stderr, "readchar failed\n");
+				exit(EXIT_FAILURE);
+			}
+			if (n == 0) {
+				*c = EOF;
+				return 0;
+			}
+		}
+		if (i < n) {
+			*c = buf[i++];
+			return 1;
+		}
+		// resets i if program reaches here
+		i = 0;
+	}
+}
+
+static void read_id() {
+	while (readchar(&curr)) {
 		if (!isalnum(curr) && curr!='_')
 			break;
 		printf("%c", curr);
@@ -19,8 +44,8 @@ void read_id() {
 	printf("\n");
 }
 
-void read_num() {
-	while ((n_read=read(fd, &curr, 1)) == 1) {
+static void read_num() {
+	while (readchar(&curr)) {
 		if (!isdigit(curr))
 			break;
 		printf("%c", curr);
@@ -28,8 +53,8 @@ void read_num() {
 	printf("\n");
 }
 
-void read_sym() {
-	while ((n_read=read(fd, &curr, 1)) == 1) {
+static void read_sym() {
+	while (readchar(&curr)) {
 		if (isspace(curr) || isalnum(curr) || curr=='_' || curr=='"')
 			break;
 		printf("%c", curr);
@@ -40,10 +65,12 @@ void read_sym() {
 void LexAnalyze(int fd_src) {
 	fd = fd_src;
 
-	if (fd < 0)
-		return;
+	if (fd < 0) {
+		fprintf(stderr, "negative file descriptor encountered\n");
+		exit(EXIT_FAILURE);
+	}
 
-	while ((n_read=read(fd, &curr, 1)) == 1) {
+	while (readchar(&curr)) {
 		if (is_within_str) {
 			if (curr == '"') {
 				is_within_str = 0;
@@ -67,15 +94,10 @@ void LexAnalyze(int fd_src) {
 					printf("SYMBOL: %c", curr);
 					read_sym();
 				}
-			} while (!isspace(curr) && n_read==1);
+			} while (!isspace(curr));
 		}
 		fflush(stdout);
 	}
 	
-	if (n_read == 0)
-		printf("\n: EOF\n");
-	else
-		fprintf(stderr, "read file failure\n");
+	printf("\n: EOF\n");
 }
-
-
