@@ -6,7 +6,6 @@
 #include "compiler.h"
 
 static	int	fd = 0;
-static	int	is_within_str = 0;
 static	char	curr;			// current character
 
 // read 1 byte from buffer
@@ -70,6 +69,7 @@ void LexAnalyze(int fd_src) {
 		exit(EXIT_FAILURE);
 	}
 
+	int is_within_str = 0;
 	while (readchar(&curr)) {
 		if (is_within_str) {
 			if (curr == '"') {
