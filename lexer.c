@@ -42,38 +42,6 @@ void LexAnalyze(int fd_src) {
 		exit(EXIT_FAILURE);
 	}
 
-	int is_starter = 1;
-
-BEGIN:	// assert: is_starter == 1
-	if (read_char() <= 0)
-		goto END;
-	if (isalpha(curr) || curr=='_')
-		goto ID;
-	if (isdigit(curr))
-		goto NUM;
-	if (isspace(curr))
-		goto BEGIN;
-	goto SYM;
-
-ID:	if (is_starter == 1) {
-		printf("ID: %c", curr);
-		is_starter = 0;
-		goto ID;
-	}
-	printf("%c", curr);
-	if (read_char() <= 0)
-		goto END;
-	if (isalnum(curr) || curr=='_')
-		goto ID;
-	is_starter = 1;
-	goto SYM;
-
-NUM:	if (is_starter == 1) {
-		printf("NUMBER: %c", curr);
-		is_starter = 0;
-		goto NUM;
-	}
-
 BEGIN:	while (read_char()) {
 		if (isalpha(curr) || curr=='_')
 			goto ID;
