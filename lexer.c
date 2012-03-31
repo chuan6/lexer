@@ -9,7 +9,7 @@ static int fd = 0;
 static char curr;		// current character
 
 // read 1 byte from buffer; return as read system call
-static int readchar() {
+static int read_char() {
 	static int n;
 	static char buf[BUFSIZ];
 	static int i = 0;
@@ -17,7 +17,7 @@ static int readchar() {
 	for (;;) {
 		if (i == 0) {
 			if ((n=read(fd, buf, BUFSIZ)) < 0) {
-				fprintf(stderr, "readchar failed\n");
+				fprintf(stderr, "read_char failed\n");
 				exit(EXIT_FAILURE);
 			}
 			if (n == 0) {
@@ -42,22 +42,56 @@ void LexAnalyze(int fd_src) {
 		exit(EXIT_FAILURE);
 	}
 
-BEGIN:	readchar();
+	int is_starter = 1;
+
+BEGIN:	// assert: is_starter == 1
+	if (read_char() <= 0)
+		goto END;
 	if (isalpha(curr) || curr=='_')
 		goto ID;
 	if (isdigit(curr))
 		goto NUM;
 	if (isspace(curr))
-		goto SPACE;
+		goto BEGIN;
 	goto SYM;
+
+ID:	if (is_starter == 1) {
+		printf("ID: %c", curr);
+		is_starter = 0;
+		goto ID;
+	}
+	printf("%c", curr);
+	if (read_char() <= 0)
+		goto END;
+	if (isalnum(curr) || curr=='_')
+		goto ID;
+	is_starter = 1;
+	goto SYM;
+
+NUM:	if (is_starter == 1) {
+		printf("NUMBER: %c", curr);
+		is_starter = 0;
+		goto NUM;
+	}
+
+BEGIN:	while (read_char()) {
+		if (isalpha(curr) || curr=='_')
+			goto ID;
+		if (isdigit(curr))
+			goto NUM;
+		if (isspace(curr))
+			continue;
+		goto SYM;
+	}
+	goto END;
 ID:	printf("ID: %c", curr);
-	while (readchar()) {
+	while (read_char()) {
 		if (isalnum(curr) || curr=='_')
 			printf("%c", curr);
 		else {
 			printf("\n");
 			if (isspace(curr))
-				goto SPACE;
+				goto BEGIN;
 			if (curr == '"')
 				goto STR;
 			goto SYM;
@@ -65,7 +99,7 @@ ID:	printf("ID: %c", curr);
 	}
 	goto END;
 NUM:	printf("NUM: %c", curr);
-	while (readchar()) {
+	while (read_char()) {
 		if (isdigit(curr))
 			printf("%c", curr);
 		else {
@@ -73,7 +107,7 @@ NUM:	printf("NUM: %c", curr);
 			if (isalpha(curr) || curr=='_')
 				goto ID;
 			if (isspace(curr))
-				goto SPACE;
+				goto BEGIN;
 			goto SYM;
 		}
 	}
@@ -83,7 +117,7 @@ SYM:	printf("SYMBOL: %c", curr);
 		printf("\n");
 		goto STR;
 	}
-	while (readchar()) {
+	while (read_char()) {
 		if (isalpha(curr) || curr=='_') {
 			printf("\n");
 			goto ID;
@@ -94,7 +128,7 @@ SYM:	printf("SYMBOL: %c", curr);
 		}
 		if (isspace(curr)) {
 			printf("\n");
-			goto SPACE;
+			goto BEGIN;
 		}
 		if (curr == '"') {
 			printf("\n");
@@ -104,22 +138,12 @@ SYM:	printf("SYMBOL: %c", curr);
 	}
 	goto END;
 STR:	printf("STRING: ");
-	while (readchar()) {
+	while (read_char()) {
 		if (curr == '"') {
 			printf("\nSYMBOL: %c\n", curr);
 			goto BEGIN;
 		}
 		printf("%c", curr);
-	}
-	goto END;
-SPACE:	while (readchar()) {
-		if (isspace(curr))
-			continue;
-		if (isalpha(curr) || curr=='_')
-			goto ID;
-		if (isdigit(curr))
-			goto NUM;
-		goto SYM;
 	}
 	goto END;
 END:	printf("\n: EOF\n");
